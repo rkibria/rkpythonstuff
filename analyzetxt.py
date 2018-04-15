@@ -4,21 +4,30 @@ def roundToDecimals(num, decs):
 	factor = math.pow(10.0, decs)
 	return math.trunc(num * factor)/factor
 
-if __name__ == '__main__':
-	filename = sys.argv[1]
+def measureTime(func):
+	def measuretimeWrapper(*args, **kwargs):
+		starttime = time.time()
+		result = func(*args, **kwargs)
+		takentime = time.time() - starttime
+		print '* took {} sec'.format(roundToDecimals(takentime, 3))
+		return result
+	return measuretimeWrapper
 
-	print 'file {} size is {} bytes'.format(filename, os.path.getsize(filename))
-
+def loadContents(filename):
+	print 'Loading file {}, size is {} bytes'.format(filename, os.path.getsize(filename))
 	contents = []
 	nlines = 0
-	starttime = time.time()
 	with open(filename, 'r') as f:
 		for line in f:
 			nlines += 1
 			words = line.split()
 			contents.extend(words)
-	takentime = time.time() - starttime
-	print 'file read in {} sec'.format(roundToDecimals(takentime, 3))
+	return (contents, nlines)
+
+if __name__ == '__main__':
+	filename = sys.argv[1]
+
+	contents, nlines = measureTime(loadContents)(filename)
 	print 'file has {} words in {} lines'.format(len(contents), nlines)
 	
 	counts = {}
