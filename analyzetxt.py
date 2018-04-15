@@ -1,4 +1,4 @@
-import os, sys, time, math, string
+import os, sys, time, math, string, argparse
 
 def roundToDecimals(num, decs):
 	factor = math.pow(10.0, decs)
@@ -46,9 +46,11 @@ def sortCounts(counts):
 	return sortedcounts
 
 if __name__ == '__main__':
-	filename = sys.argv[1]
+	parser = argparse.ArgumentParser()
+	parser.add_argument("filename", help="path to text file")
+	args = parser.parse_args()
 
-	contents, nlines = loadContents(filename)
+	contents, nlines = loadContents(args.filename)
 	counts = countWords(contents)
 	sortedcounts = sortCounts(counts)
 
