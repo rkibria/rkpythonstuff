@@ -1,4 +1,4 @@
-import os, sys, time, math
+import os, sys, time, math, string
 
 def roundToDecimals(num, decs):
 	factor = math.pow(10.0, decs)
@@ -32,6 +32,7 @@ def countWords(contents):
 	counts = {}
 	for word in contents:
 		word = word.lower()
+		word = word.translate(None, string.punctuation)
 		if not (word in counts):
 			counts[word] = 0
 		counts[word] += 1
@@ -51,6 +52,6 @@ if __name__ == '__main__':
 	counts = countWords(contents)
 	sortedcounts = sortCounts(counts)
 
-	for i in xrange(20):
+	for i in xrange(200):
 		current = sortedcounts[i]
 		print '#{}: {} ({}, {}%)'.format(i+1, current[1], current[0], roundToDecimals(current[0]/float(len(contents))*100.0, 3))
