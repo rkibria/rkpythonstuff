@@ -1,59 +1,95 @@
-import os, sys, time, math, string, argparse
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-def roundToDecimals(num, decs):
-	factor = math.pow(10.0, decs)
-	return math.trunc(num * factor)/factor
+"""
+Count words in a text file
+"""
 
-def measureTime(func):
-	def measuretimeWrapper(*args, **kwargs):
-		starttime = time.time()
-		result = func(*args, **kwargs)
-		takentime = time.time() - starttime
-		print '* took {} sec'.format(roundToDecimals(takentime, 3))
-		return result
-	return measuretimeWrapper
+import os
+import time
+import math
+import string
+import argparse
 
-@measureTime
-def loadContents(filename):
-	print 'Loading file {}, size is {} bytes'.format(filename, os.path.getsize(filename))
-	contents = []
-	nlines = 0
-	with open(filename, 'r') as f:
-		for line in f:
-			nlines += 1
-			words = line.split()
-			contents.extend(words)
-	print 'Found {} words in {} lines'.format(len(contents), nlines)
-	return (contents, nlines)
+def round_to_decimals(num, decs):
+    """
+    Round floating point number to some number of decimals
+    """
+    factor = math.pow(10.0, decs)
+    return math.trunc(num * factor) / factor
 
-@measureTime
-def countWords(contents):
-	print "Count words"
-	counts = {}
-	for word in contents:
-		word = word.lower()
-		word = word.translate(None, string.punctuation)
-		if not (word in counts):
-			counts[word] = 0
-		counts[word] += 1
-	return counts
+def measure_time(func):
+    """
+    Time measuring decorator
+    """
+    def measure_time_wrapper(*args, **kwargs):
+        starttime = time.time()
+        result = func(*args, **kwargs)
+        takentime = time.time() - starttime
+        print('* took {} sec'.format(round_to_decimals(takentime, 3)))
+        return result
+    return measure_time_wrapper
 
-@measureTime
-def sortCounts(counts):
-	print "Sorting by count"
-	countofwords = [(count, word) for word,count in counts.iteritems()]
-	sortedcounts = sorted(countofwords, reverse=True)
-	return sortedcounts
+@measure_time
+def load_contents(filename):
+    """
+    Load text file into a flat list, return list and number of lines
+    """
+    print('Loading file {}, size is {} bytes'.format(filename, os.path.getsize(filename)))
+    contents = []
+    nlines = 0
+    with open(filename, 'r', encoding="utf-8") as file:
+        for line in file:
+            nlines += 1
+            words = line.split()
+            contents.extend(words)
+    print('Found {} words in {} lines'.format(len(contents), nlines))
+    return (contents, nlines)
+
+@measure_time
+def count_words(contents):
+    """
+    Returns dictionary of words and their count.
+    Removes all punctuation characters.
+    """
+    print("Count words")
+    counts = {}
+    for word in contents:
+        word = word.lower()
+        word = word.translate(str.maketrans("", "", string.punctuation))
+        if not word in counts:
+            counts[word] = 0
+        counts[word] += 1
+    return counts
+
+@measure_time
+def sort_counts(counts):
+    """
+    Sorting
+    """
+    print("Sorting by count")
+    countofwords = [(count, word) for word, count in counts.items()]
+    sortedcounts = sorted(countofwords, reverse=True)
+    return sortedcounts
+
+def main():
+    """
+    Entry point
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="path to text file")
+    args = parser.parse_args()
+
+    contents, _nlines = load_contents(args.filename)
+    counts = count_words(contents)
+    sortedcounts = sort_counts(counts)
+
+    for i in range(200):
+        current = sortedcounts[i]
+        print('#{}: {} ({}, {}%)'.format(i+1, current[1], current[0],
+                                         round_to_decimals(current[0]
+                                                           / float(len(contents)) * 100.0,
+                                                           3)))
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	parser.add_argument("filename", help="path to text file")
-	args = parser.parse_args()
-
-	contents, nlines = loadContents(args.filename)
-	counts = countWords(contents)
-	sortedcounts = sortCounts(counts)
-
-	for i in xrange(200):
-		current = sortedcounts[i]
-		print '#{}: {} ({}, {}%)'.format(i+1, current[1], current[0], roundToDecimals(current[0]/float(len(contents))*100.0, 3))
+    main()
