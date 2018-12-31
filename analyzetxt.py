@@ -78,18 +78,21 @@ def main():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="path to text file")
+    parser.add_argument("--simple", help="just output the words without statistics",
+                        action="store_true")
     args = parser.parse_args()
 
     contents, _nlines = load_contents(args.filename)
     counts = count_words(contents)
     sortedcounts = sort_counts(counts)
 
-    for i in range(200):
-        current = sortedcounts[i]
-        print('#{}: {} ({}, {}%)'.format(i+1, current[1], current[0],
-                                         round_to_decimals(current[0]
-                                                           / float(len(contents)) * 100.0,
-                                                           3)))
+    for i in range(min(len(sortedcounts), 1000)):
+        count, word = sortedcounts[i]
+        if not args.simple:
+            percentage = round_to_decimals(count / float(len(contents)) * 100.0, 3)
+            print('#{}: {} ({}, {}%)'.format(i + 1, word, count, percentage))
+        else:
+            print(word)
 
 if __name__ == '__main__':
     main()
