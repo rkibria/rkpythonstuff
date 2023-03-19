@@ -73,60 +73,59 @@ def labyrinth_to_string(labyrinth):
 
     return diagram
 
-def dfs_make(visited, labyrinth, row, col):
-
-    def get_visited(visited, row, col):
-        return visited[-(row + 1)][col]
-
-    def set_visited(visited, row, col):
-        visited[-(row + 1)][col] = True
-
-    def get_unvisited_neighbors(row, col, max_row, max_col, visited):
-        possible_neighbors = list()
-        if row + 1 <= max_row and not get_visited(visited, row + 1, col):
-            possible_neighbors.append((0, row + 1, col,)) # N
-        if row - 1 >= 0 and not get_visited(visited, row - 1, col):
-            possible_neighbors.append((1, row - 1, col,)) # S
-        if col - 1 >= 0 and not get_visited(visited, row, col - 1):
-            possible_neighbors.append((2, row, col - 1,)) # W
-        if col + 1 <= max_col and not get_visited(visited, row, col + 1):
-            possible_neighbors.append((3, row, col + 1,)) # E
-        return possible_neighbors
-
-    def open_walls(cells, row, col, neighbor):
-        direction = neighbor[0]
-        opposed = None
-        if direction == 0:
-            opposed = 1
-        elif direction == 1:
-            opposed = 0
-        elif direction == 2:
-            opposed = 3
-        else:
-            opposed = 2
-        cells[-(row + 1)][col][direction] = False
-        cells[-(neighbor[1] + 1)][neighbor[2]][opposed] = False
-
-    def do_recurse(cells, row, col, neighbor, visited, labyrinth):
-        open_walls(cells, row, col, neighbor)
-        set_visited(visited, row, col)
-        set_visited(visited, neighbor[1], neighbor[2])
-        dfs_make(visited, labyrinth, neighbor[1], neighbor[2])
-
-    cells = labyrinth["cells"]
-    size = labyrinth["size"]
-    max_row = size[0] - 1
-    max_col = size[1] - 1
-    while True:
-        possible_neighbors = get_unvisited_neighbors(row, col, max_row, max_col, visited)
-        neighbor = None
-        if len(possible_neighbors) == 0:
-            break
-        else:
-            neighbor = possible_neighbors[random.randint(0, len(possible_neighbors) - 1)]
-            do_recurse(cells, row, col, neighbor, visited, labyrinth)
-
 def make_labyrinth(rows, cols, open_walls_chance=0):
+    """
+    Generate a labyrinth of the given size
+    Returns a dictionary
+    """
+
+    def dfs_make(visited, labyrinth, row, col):
+        def get_visited(visited, row, col):
+            return visited[-(row + 1)][col]
+        def set_visited(visited, row, col):
+            visited[-(row + 1)][col] = True
+        def get_unvisited_neighbors(row, col, max_row, max_col, visited):
+            possible_neighbors = list()
+            if row + 1 <= max_row and not get_visited(visited, row + 1, col):
+                possible_neighbors.append((0, row + 1, col,)) # N
+            if row - 1 >= 0 and not get_visited(visited, row - 1, col):
+                possible_neighbors.append((1, row - 1, col,)) # S
+            if col - 1 >= 0 and not get_visited(visited, row, col - 1):
+                possible_neighbors.append((2, row, col - 1,)) # W
+            if col + 1 <= max_col and not get_visited(visited, row, col + 1):
+                possible_neighbors.append((3, row, col + 1,)) # E
+            return possible_neighbors
+        def open_walls(cells, row, col, neighbor):
+            direction = neighbor[0]
+            opposed = None
+            if direction == 0:
+                opposed = 1
+            elif direction == 1:
+                opposed = 0
+            elif direction == 2:
+                opposed = 3
+            else:
+                opposed = 2
+            cells[-(row + 1)][col][direction] = False
+            cells[-(neighbor[1] + 1)][neighbor[2]][opposed] = False
+        def do_recurse(cells, row, col, neighbor, visited, labyrinth):
+            open_walls(cells, row, col, neighbor)
+            set_visited(visited, row, col)
+            set_visited(visited, neighbor[1], neighbor[2])
+            dfs_make(visited, labyrinth, neighbor[1], neighbor[2])
+        cells = labyrinth["cells"]
+        size = labyrinth["size"]
+        max_row = size[0] - 1
+        max_col = size[1] - 1
+        while True:
+            possible_neighbors = get_unvisited_neighbors(row, col, max_row, max_col, visited)
+            neighbor = None
+            if len(possible_neighbors) == 0:
+                break
+            else:
+                neighbor = possible_neighbors[random.randint(0, len(possible_neighbors) - 1)]
+                do_recurse(cells, row, col, neighbor, visited, labyrinth)
+
     labyrinth = dict()
     labyrinth["size"] = (rows, cols,)
     # set start position (on random edge)
