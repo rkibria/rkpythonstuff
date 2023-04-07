@@ -28,51 +28,6 @@ WALL_SOUTH = 1
 WALL_WEST = 2
 WALL_EAST = 3
 
-def labyrinth_to_string(labyrinth):
-    diagram = ""
-    diagram += " size: %s\n" % str(labyrinth["size"])
-    diagram += "start: %s\n" % str(labyrinth["start"])
-    diagram += " ends: %s\n" % str(labyrinth["ends"])
-
-    cells = labyrinth["cells"]
-    numRows = len(cells)
-    for row in range(numRows):
-        rowCells = cells[row]
-        numCols = len(rowCells)
-
-        if row == 0:
-            for col in range(numCols):
-                cell = rowCells[col]
-                if cell[WALL_NORTH]:
-                    diagram += ' _'
-                else:
-                    diagram += '  '
-            diagram += "\n"
-
-        lastCol = numCols - 1
-        for col in range(numCols):
-            cell = rowCells[col]
-
-            if cell[WALL_WEST]:
-                diagram += '|'
-            else:
-                diagram += ' '
-
-            if cell[WALL_SOUTH]:
-                diagram += '_'
-            else:
-                diagram += ' '
-
-            if col == lastCol:
-                if cell[WALL_EAST]:
-                    diagram += '|'
-                else:
-                    diagram += ' '
-
-        diagram += "\n"
-
-    return diagram
-
 def make_labyrinth(rows, cols, open_walls_chance=0):
     """
     Generate a labyrinth of the given size
@@ -128,23 +83,7 @@ def make_labyrinth(rows, cols, open_walls_chance=0):
 
     labyrinth = dict()
     labyrinth["size"] = (rows, cols,)
-    # set start position (on random edge)
-    start_row = None
-    start_col = None
-    start_edge = random.randint(0, 3) # north, south, west, east
-    if start_edge == 0:
-        start_row = rows - 1
-        start_col = random.randint(0, cols - 1)
-    elif start_edge == 1:
-        start_row = 0
-        start_col = random.randint(0, cols - 1)
-    elif start_edge == 2:
-        start_col = 0
-        start_row = random.randint(0, rows - 1)
-    else:
-        start_col = cols - 1
-        start_row = random.randint(0, rows - 1)
-    labyrinth["start"] = (start_row, start_col,)
+
     # initialize cells
     cells = list()
     visited = list()
@@ -159,19 +98,8 @@ def make_labyrinth(rows, cols, open_walls_chance=0):
             visited_row.append(False)
 
     # generate random cells
+    start_row, start_col = get_random_edge_pos(rows, cols)
     dfs_make(visited, labyrinth, start_row, start_col)
-
-    # find end points
-    labyrinth["ends"] = list()
-    for nrow in range(0, rows):
-        for ncol in range(0, cols):
-            cell = cells[-(nrow + 1)][ncol]
-            if (cell == [True, True, True, False,]
-                or cell == [True, True, False, True,]
-                or cell == [True, False, True, True,]
-                or cell == [False, True, True, True,]
-                ):
-                labyrinth["ends"].append((nrow, ncol, ))
 
     # open random walls
     for nrow in range(1, rows - 1):
@@ -302,16 +230,126 @@ def labyrinth_to_area(labyrinth):
 
     return area
 
+def labyrinth_to_string(labyrinth):
+    diagram = ""
+    diagram += " size: %s\n" % str(labyrinth["size"])
+
+    cells = labyrinth["cells"]
+    numRows = len(cells)
+    for row in range(numRows):
+        rowCells = cells[row]
+        numCols = len(rowCells)
+
+        if row == 0:
+            for col in range(numCols):
+                cell = rowCells[col]
+                if cell[WALL_NORTH]:
+                    diagram += ' _'
+                else:
+                    diagram += '  '
+            diagram += "\n"
+
+        lastCol = numCols - 1
+        for col in range(numCols):
+            cell = rowCells[col]
+
+            if cell[WALL_WEST]:
+                diagram += '|'
+            else:
+                diagram += ' '
+
+            if cell[WALL_SOUTH]:
+                diagram += '_'
+            else:
+                diagram += ' '
+
+            if col == lastCol:
+                if cell[WALL_EAST]:
+                    diagram += '|'
+                else:
+                    diagram += ' '
+
+        diagram += "\n"
+
+    return diagram
+
+def get_random_edge_pos(rows, cols):
+    """
+    Get a random position on one of the edges
+    of a labyrinth of given size.
+    Return (start_row, start_col,)
+    """
+    start_edge = random.randint(0, 3) # north, south, west, east
+    if start_edge == 0:
+        start_row = rows - 1
+        start_col = random.randint(0, cols - 1)
+    elif start_edge == 1:
+        start_row = 0
+        start_col = random.randint(0, cols - 1)
+    elif start_edge == 2:
+        start_col = 0
+        start_row = random.randint(0, rows - 1)
+    else:
+        start_col = cols - 1
+        start_row = random.randint(0, rows - 1)
+    return (start_row, start_col)
+
+def get_blocky_labyrinth(labyrinth):
+    """
+    Returns dict
+    """
+    lab_rows,lab_cols = labyrinth["size"]
+    cells = labyrinth["cells"]
+    blocky_labyrinth = {}
+    blocky_labyrinth["cells"] = []
+    out_cells = blocky_labyrinth["cells"]
+    for row in range(lab_rows):
+        row_cells = cells[row]
+        line = ""
+        next_line = ""
+        for col in range(lab_cols):
+            cell = row_cells[col]
+            line += "."
+
+            if col != lab_cols - 1:
+                if cell[WALL_EAST]:
+                    line += "#"
+                else:
+                    line += "."
+
+            if cell[WALL_SOUTH]:
+                next_line += "#"
+            else:
+                next_line += "."
+
+            if col != lab_cols - 1:
+                if cell[WALL_EAST] or cell[WALL_SOUTH]:
+                    next_line += "#"
+                else:
+                    next_line += "."
+
+        out_cells.append(line)
+        if row != lab_rows - 1:
+            out_cells.append(next_line)
+    # add the outside walls around the whole area
+    cur_size = (len(out_cells), len(out_cells[0]))
+    for i in range(len(out_cells)):
+        out_cells[i] = "#" + out_cells[i] + "#"
+    top_bottom_border = "#" * (cur_size[1] + 2)
+    out_cells.insert(0, top_bottom_border)
+    out_cells.append(top_bottom_border)
+    blocky_labyrinth["size"] = (len(out_cells), len(out_cells[0]))
+    return blocky_labyrinth
+
 if __name__ == "__main__":
     import pprint
     pp = pprint.PrettyPrinter(indent=2)
 
-    labyrinth = make_labyrinth(5, 5, 20)
+    labyrinth = make_labyrinth(7, 5, 20)
     print(labyrinth_to_string(labyrinth))
 
-    print("area:")
-    area = labyrinth_to_area(labyrinth)
-    pp.pprint(area)
+    blocky_labyrinth = get_blocky_labyrinth(labyrinth)
+    pp.pprint(blocky_labyrinth)
 
-    print("raw:")
-    pp.pprint(labyrinth)
+    # print("raw:")
+    # pp.pprint(labyrinth)
